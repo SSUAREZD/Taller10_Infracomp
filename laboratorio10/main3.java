@@ -1,8 +1,12 @@
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
-public class main {
+public class main3 {
+
+
     private final static String ALGORITMO = "AES";
     
     public static void imprimir(byte[] contenido) {
@@ -24,23 +28,21 @@ public class main {
         try{
             KeyGenerator keyGen = KeyGenerator.getInstance(ALGORITMO);
             SecretKey secretKey = keyGen.generateKey();
-            
-            long tiempoInicial = System.nanoTime();
-            byte[] mensajeCifrado = Simetrico.cifrar(secretKey, mensaje);
-            imprimir(mensajeCifrado);
+
+            FileOutputStream archivo = new FileOutputStream("archivoEncriptado.txt");
+            ObjectOutputStream oos = new ObjectOutputStream(archivo);
+            oos.writeObject(secretKey);
+            System.out.println("Llave: "+secretKey);
             System.out.println();
 
-            byte[] mensajeDescifrado = Simetrico.descifrar(secretKey, mensajeCifrado);
-            long tiempoFinal = System.nanoTime();
-            imprimir(mensajeDescifrado);
-            System.out.println();
-            long tiempoTotal = tiempoFinal - tiempoInicial;
-            System.out.println("Tiempo de cifrado: " + (tiempoTotal) + " nanosegundos");
-            String mensajeDescifradoString = new String(mensajeDescifrado);
-            System.out.println("El mensaje descifrado es: " + mensajeDescifradoString);
+            byte[] mensajeCifrado = Simetrico.cifrar(secretKey, mensaje);
+            imprimir(mensajeCifrado);
+            oos.writeObject(mensajeCifrado);
         }
         catch (Exception e) {
             System.out.println("Error al generar la llave: " + e.getMessage());
         }
     }
 }
+    
+
