@@ -1,41 +1,49 @@
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
+public class Main4 {
+    private static final String ALGORITMO = "RSA/ECB/PKCS1Padding";
 
-public class main4 {    private final static String ALGORITMO = "AES";
-    
     public static void imprimir(byte[] contenido) {
-        int i = 0;
-        for( ; i < contenido.length; i++) {
-            System.out.print(contenido[i] + " ");
+        for (byte b : contenido) {
+            System.out.print((b & 0xFF) + " ");
         }
+        System.out.println();
     }
-    
-    
-    public static void main(String[] args) {
-        System.out.println("Decripción de mensaje cifrado simetrico");
-        try{
 
-            FileInputStream archivo = new FileInputStream("archivoEncriptado.txt");
-            ObjectInputStream ois = new ObjectInputStream(archivo);
-            SecretKey llave = (SecretKey) ois.readObject();
-            System.out.println("Llave: "+ llave);
-            System.out.println();
+    public static void main(String[] args) throws Exception {
+        // Recuperar llave pública
+        FileInputStream fisPub = new FileInputStream("llavePublica.key");
+        ObjectInputStream oisPub = new ObjectInputStream(fisPub);
+        PublicKey llavePublica = (PublicKey) oisPub.readObject();
+        oisPub.close();
 
-            byte[] mensajeCifrado = (byte[]) ois.readObject();
-            ois.close();
-            byte[] mensajeDescifrado = Simetrico.descifrar(llave, mensajeCifrado);
-            String mensajeDescifradoString = new String(mensajeDescifrado);
-            System.out.println("El mensaje descifrado es: " + mensajeDescifradoString);
+        // Recuperar llave privada
+        FileInputStream fisPriv = new FileInputStream("llavePrivada.key");
+        ObjectInputStream oisPriv = new ObjectInputStream(fisPriv);
+        PrivateKey llavePrivada = (PrivateKey) oisPriv.readObject();
+        oisPriv.close();
 
-        }
-        catch (Exception e) {
-            System.out.println("Error al generar la llave: " + e.getMessage());
-        }
+        // Recuperar mensaje cifrado
+        FileInputStream fisMsg = new FileInputStream("mensajeCifrado.dat");
+        ObjectInputStream oisMsg = new ObjectInputStream(fisMsg);
+        byte[] mensajeCifrado = (byte[]) oisMsg.readObject();
+        oisMsg.close();
+
+        // Mostrar ciphertext
+        System.out.print("Mensaje cifrado (byte[]): ");
+        imprimir(mensajeCifrado);
+        System.out.println();
+
+        // Descifrar con la llave privada
+        byte[] descifrado = Asimetrico.descifrar(llavePrivada, ALGORITMO, mensajeCifrado);
+
+        // Mostrar resultado
+        System.out.print("Mensaje descifrado (byte[]): ");
+        imprimir(descifrado);
+        System.out.println("Mensaje descifrado a texto plano: " 
+                           + new String(descifrado, "UTF-8"));
     }
-    
 }

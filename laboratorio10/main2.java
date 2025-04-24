@@ -1,45 +1,54 @@
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.util.Scanner;
 
-public class main2 {
-    
-    private final static String ALGORITMO = "AES";
-    
+public class Main2 {
+    private static final String ALGORITMO = "RSA/ECB/PKCS1Padding";
+
     public static void imprimir(byte[] contenido) {
-        int i = 0;
-        for( ; i < contenido.length; i++) {
-            System.out.print(contenido[i] + " ");
+        for (byte b : contenido) {
+            System.out.print((b & 0xFF) + " ");
         }
+        System.out.println();
     }
-    public static void main(String[] args){
 
-        System.out.println("Escriba mensaje a cifrar:");
-        String mensaje = System.console().readLine();
-        System.out.println("El mensaje es: "+ mensaje);
-        
-        byte[] mensajeBytes = mensaje.getBytes();
+    public static void main(String[] args) throws Exception {
+        Scanner scanner = new Scanner(System.in);
+
+        // Leer mensaje
+        System.out.println("Escriba un mensaje de texto:");
+        String mensaje = scanner.nextLine();
+        System.out.println("Input en texto plano: " + mensaje);
+        byte[] mensajeBytes = mensaje.getBytes("UTF-8");
+        System.out.print("Input en bytes[]: ");
         imprimir(mensajeBytes);
-        try{
-            KeyGenerator keyGen = KeyGenerator.getInstance(ALGORITMO);
-            SecretKey k1 = keyGen.generateKey();
-            SecretKey k2 = keyGen.generateKey();
-            
-            //Se pone como comentario el cifrado con k2 ya que no corre cuando se descifra con llave incorrecta
+        System.out.println();
 
-            byte[] tc1 = Simetrico.cifrar(k1, mensaje);
+        // Generar par de llaves RSA 1024
+        KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+        gen.initialize(1024);
+        KeyPair par = gen.generateKeyPair();
+        PublicKey pub = par.getPublic();
+        PrivateKey priv = par.getPrivate();
 
-            byte[] tc1DescifradoK1 = Simetrico.descifrar(k1, tc1);
-            //byte[] tc1DescifradoK2 = Simetrico.descifrar(k2, tc1);
+        // Cifrar con la llave PRIVADA
+        byte[] cifradoPriv = Asimetrico.cifrar(priv, ALGORITMO, mensaje);
+        System.out.print("Cifrado con llave privada (bytes[]): ");
+        imprimir(cifradoPriv);
+        System.out.println();
 
-            String tc1DescifradoStringK1 = new String(tc1DescifradoK1);
-            //String tc1DescifradoStringK2 = new String(tc1DescifradoK2);
+        // Descifrar con la llave PÚBLICA
+        byte[] descifradoPub = Asimetrico.descifrar(pub, ALGORITMO, cifradoPriv);
+        System.out.print("Descifrado con llave pública (bytes[]): ");
+        imprimir(descifradoPub);
+        System.out.println();
 
-            System.out.println("Tc1 con k1 es: " + tc1DescifradoStringK1);
-            //System.out.println("Tc1 con k2 es: " + tc1DescifradoStringK2);
+        // Reconstruir texto y mostrar
+        String textoFinal = new String(descifradoPub, "UTF-8");
+        System.out.println("Texto recuperado: " + textoFinal);
 
-        }
-        catch (Exception e) {
-            System.out.println("Error al generar la llave: " + e.getMessage());
-        }
+        scanner.close();
     }
 }

@@ -1,48 +1,51 @@
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.util.Scanner;
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
+public class Main3 {
+    private static final String ALGORITMO = "RSA/ECB/PKCS1Padding";
 
-public class main3 {
+    public static void main(String[] args) throws Exception {
+        Scanner scanner = new Scanner(System.in);
 
+        // Leer mensaje de entrada
+        System.out.println("Escriba un mensaje de texto:");
+        String mensaje = scanner.nextLine();
 
-    private final static String ALGORITMO = "AES";
-    
-    public static void imprimir(byte[] contenido) {
-        int i = 0;
-        for( ; i < contenido.length; i++) {
-            System.out.print(contenido[i] + " ");
+        // Generar par de llaves RSA (1024 bits)
+        KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+        gen.initialize(1024);
+        KeyPair par = gen.generateKeyPair();
+        PublicKey llavePublica = par.getPublic();
+        PrivateKey llavePrivada = par.getPrivate();
+
+        // Guardar llave pública en archivo
+        try (FileOutputStream fos = new FileOutputStream("llavePublica.key");
+             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(llavePublica);
         }
-    }
-    
-    
-    public static void main(String[] args) {
-        System.out.println("Escriba mensaje a cifrar:");
-        String mensaje = System.console().readLine();
-        System.out.println("El mensaje es: "+ mensaje);
-        
-        byte[] mensajeBytes = mensaje.getBytes();
-        imprimir(mensajeBytes);
-        
-        try{
-            KeyGenerator keyGen = KeyGenerator.getInstance(ALGORITMO);
-            SecretKey secretKey = keyGen.generateKey();
 
-            FileOutputStream archivo = new FileOutputStream("archivoEncriptado.txt");
-            ObjectOutputStream oos = new ObjectOutputStream(archivo);
-            oos.writeObject(secretKey);
-            System.out.println("Llave: "+secretKey);
-            System.out.println();
+        // Guardar llave privada en archivo
+        try (FileOutputStream fos = new FileOutputStream("llavePrivada.key");
+             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(llavePrivada);
+        }
 
-            byte[] mensajeCifrado = Simetrico.cifrar(secretKey, mensaje);
-            imprimir(mensajeCifrado);
-            oos.writeObject(mensajeCifrado);
+        // Cifrar el mensaje con la llave pública
+        byte[] cifrado = Asimetrico.cifrar(llavePublica, ALGORITMO, mensaje);
+
+        // Guardar el texto cifrado en un archivo
+        try (FileOutputStream fos = new FileOutputStream("mensajeCifrado.dat");
+             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(cifrado);
         }
-        catch (Exception e) {
-            System.out.println("Error al generar la llave: " + e.getMessage());
-        }
+
+        System.out.println(">> Llave pública (llavePublica.key), llave privada (llavePrivada.key)");
+        System.out.println("   y mensaje cifrado (mensajeCifrado.dat) guardados.");
+        scanner.close();
     }
 }
-    
-

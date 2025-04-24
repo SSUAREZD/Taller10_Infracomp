@@ -1,46 +1,65 @@
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.util.Scanner;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
+public class Main {
+    private static final String ALGORITMO = "RSA/ECB/PKCS1Padding";
 
-public class main {
-    private final static String ALGORITMO = "AES";
-    
     public static void imprimir(byte[] contenido) {
-        int i = 0;
-        for( ; i < contenido.length; i++) {
-            System.out.print(contenido[i] + " ");
+        for (byte b : contenido) {
+            System.out.print((b & 0xFF) + " ");
         }
+        System.out.println();
     }
-    
-    
-    public static void main(String[] args) {
-        System.out.println("Escriba mensaje a cifrar:");
-        String mensaje = System.console().readLine();
-        System.out.println("El mensaje es: "+ mensaje);
-        
-        byte[] mensajeBytes = mensaje.getBytes();
-        imprimir(mensajeBytes);
-        
-        try{
-            KeyGenerator keyGen = KeyGenerator.getInstance(ALGORITMO);
-            SecretKey secretKey = keyGen.generateKey();
-            
-            long tiempoInicial = System.nanoTime();
-            byte[] mensajeCifrado = Simetrico.cifrar(secretKey, mensaje);
-            imprimir(mensajeCifrado);
-            System.out.println();
 
-            byte[] mensajeDescifrado = Simetrico.descifrar(secretKey, mensajeCifrado);
-            long tiempoFinal = System.nanoTime();
-            imprimir(mensajeDescifrado);
-            System.out.println();
-            long tiempoTotal = tiempoFinal - tiempoInicial;
-            System.out.println("Tiempo de cifrado: " + (tiempoTotal) + " nanosegundos");
-            String mensajeDescifradoString = new String(mensajeDescifrado);
-            System.out.println("El mensaje descifrado es: " + mensajeDescifradoString);
-        }
-        catch (Exception e) {
-            System.out.println("Error al generar la llave: " + e.getMessage());
-        }
+    public static void main(String[] args) throws Exception {
+        Scanner scanner = new Scanner(System.in);
+
+        // Leer y mostrar texto
+        System.out.println("Escriba un mensaje de texto:");
+        String mensaje = scanner.nextLine();
+        System.out.println("Input en texto plano: " + mensaje);
+
+        byte[] mensajeBytes = mensaje.getBytes("UTF-8");
+        System.out.print("Input en bytes[]: ");
+        imprimir(mensajeBytes);
+        System.out.println();
+
+        // Generar par de llaves RSA 1024 bits
+        KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+        gen.initialize(1024);
+        KeyPair par = gen.generateKeyPair();
+        PublicKey llavePublica = par.getPublic();
+        PrivateKey llavePrivada = par.getPrivate();
+
+        // 1) Tiempo de cifrado
+        long tInicioCif = System.nanoTime();
+        byte[] cifrado = Asimetrico.cifrar(llavePublica, ALGORITMO, mensaje);
+        long tFinCif = System.nanoTime();
+        long tiempoCifrado = tFinCif - tInicioCif;
+
+        System.out.print("Input cifrado en RSA con llaves de 1024 bits en byte[]: ");
+        imprimir(cifrado);
+        System.out.println("Tiempo de cifrado: " + tiempoCifrado + " ns");
+        System.out.println();
+
+        // 2) Tiempo de descifrado
+        long tInicioDesc = System.nanoTime();
+        byte[] descifrado = Asimetrico.descifrar(llavePrivada, ALGORITMO, cifrado);
+        long tFinDesc = System.nanoTime();
+        long tiempoDescifrado = tFinDesc - tInicioDesc;
+
+        System.out.print("Input descifrado en byte[]: ");
+        imprimir(descifrado);
+        System.out.println("Tiempo de descifrado: " + tiempoDescifrado + " ns");
+        System.out.println();
+
+        // Convertir a String y mostrar
+        System.out.println("Input descifrado convertido a texto plano: " 
+                           + new String(descifrado, "UTF-8"));
+
+        scanner.close();
     }
 }
