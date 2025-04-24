@@ -1,46 +1,20 @@
+import java.util.Scanner;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
+public class Main {
+    public static void main(String[] args) throws Exception {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Ingrese un texto: ");
+        String input = sc.nextLine();
 
-public class main {
-    private final static String ALGORITMO = "AES";
-    
-    public static void imprimir(byte[] contenido) {
-        int i = 0;
-        for( ; i < contenido.length; i++) {
-            System.out.print(contenido[i] + " ");
-        }
-    }
-    
-    
-    public static void main(String[] args) {
-        System.out.println("Escriba mensaje a cifrar:");
-        String mensaje = System.console().readLine();
-        System.out.println("El mensaje es: "+ mensaje);
-        
-        byte[] mensajeBytes = mensaje.getBytes();
-        imprimir(mensajeBytes);
-        
-        try{
-            KeyGenerator keyGen = KeyGenerator.getInstance(ALGORITMO);
-            SecretKey secretKey = keyGen.generateKey();
-            
-            long tiempoInicial = System.nanoTime();
-            byte[] mensajeCifrado = Simetrico.cifrar(secretKey, mensaje);
-            imprimir(mensajeCifrado);
-            System.out.println();
+        byte[] inputBytes = input.getBytes();
 
-            byte[] mensajeDescifrado = Simetrico.descifrar(secretKey, mensajeCifrado);
-            long tiempoFinal = System.nanoTime();
-            imprimir(mensajeDescifrado);
-            System.out.println();
-            long tiempoTotal = tiempoFinal - tiempoInicial;
-            System.out.println("Tiempo de cifrado: " + (tiempoTotal) + " nanosegundos");
-            String mensajeDescifradoString = new String(mensajeDescifrado);
-            System.out.println("El mensaje descifrado es: " + mensajeDescifradoString);
-        }
-        catch (Exception e) {
-            System.out.println("Error al generar la llave: " + e.getMessage());
-        }
+        System.out.print("MD5: ");
+        byte[] md5 = Digest.getDigest("MD5", inputBytes);
+        Digest.imprimirHexa(md5);
+
+        System.out.print("SHA-1: ");
+        byte[] sha1 = Digest.getDigest("SHA-1", inputBytes);
+        Digest.imprimirHexa(sha1);
     }
 }
+
